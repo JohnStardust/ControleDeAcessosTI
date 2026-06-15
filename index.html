@@ -1027,22 +1027,25 @@ try {
 } catch(e) {}
 
 async function loadCards() {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('cards')
     .select('*');
 
-  cards = {
-    criando: [],
-    monitores: [],
-    concluido: []
-  };
+  if (error) {
+    console.error('Erro ao carregar cartões:', error.message);
+    return;
+  }
 
-  data.forEach(card => {
-    cards[card.coluna].push({
-      id: card.id,
-      user: card.user_name,
-      date: card.card_date
-    });
+  cards = { criando: [], monitores: [], concluido: [] };
+
+  (data || []).forEach(card => {
+    if (cards[card.coluna]) {
+      cards[card.coluna].push({
+        id: card.id,
+        user: card.user_name,
+        date: card.card_date
+      });
+    }
   });
 
   renderAll();
@@ -1107,11 +1110,24 @@ async function addCard(col) {
   const user = document.getElementById('user-' + col).value.trim();
   const date = document.getElementById('date-' + col).value.trim();
   if (!user) { document.getElementById('user-' + col).focus(); return; }
-  await supabase
+
+  const btn = document.querySelector(`#form-${col} .btn-confirm`);
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando…'; }
+
+  const { error } = await supabase
     .from('cards')
     .insert({ user_name: user, card_date: date || '—', coluna: col });
-  await loadCards();
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Adicionar'; }
+
+  if (error) {
+    console.error('Erro ao adicionar cartão:', error.message);
+    alert('Erro ao salvar: ' + error.message);
+    return;
+  }
+
   closeForm(col);
+  await loadCards();
 }
 
 // Enter key on inputs
