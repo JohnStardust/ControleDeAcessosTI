@@ -785,6 +785,15 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+const supabase = window.supabase.createClient(
+  "https://eyehyqncgplovnpsgbfu.supabase.co",
+  "sb_publishable_wrjsK9A9WsH2tga6VfOVng_cYgfVvS0"
+);
+</script>
+
 <script>
 /* ═══════════════ DADOS ═══════════════ */
 
@@ -1008,22 +1017,14 @@ let deleteTarget = null;
 let checkState = {}; // { typeId: Set of done stepIndexes }
 let currentType = null;
 
-// Load from localStorage
+// Load checks from localStorage
 try {
-  const saved = localStorage.getItem('ti_kanban_v2');
-  if (saved) cards = JSON.parse(saved);
   const savedChecks = localStorage.getItem('ti_checks_v2');
   if (savedChecks) {
     const raw = JSON.parse(savedChecks);
     for (const k in raw) checkState[k] = new Set(raw[k]);
   }
 } catch(e) {}
-
-async function saveCard(card) {
-  await supabase
-    .from('cards')
-    .insert(card);
-}
 
 async function loadCards() {
   const { data } = await supabase
@@ -1057,7 +1058,6 @@ function switchView(v) {
 }
 
 /* ═══════════════ KANBAN ═══════════════ */
-function genId() { return 'c' + Date.now() + Math.random().toString(36).slice(2,6); }
 
 const COL_ICONS = { criando: '🔧', monitores: '👁️', concluido: '✅' };
 
@@ -1103,13 +1103,14 @@ function closeForm(col) {
   document.getElementById('date-' + col).value = '';
 }
 
-function addCard(col) {
+async function addCard(col) {
   const user = document.getElementById('user-' + col).value.trim();
   const date = document.getElementById('date-' + col).value.trim();
   if (!user) { document.getElementById('user-' + col).focus(); return; }
-  cards[col].push({ id: genId(), user, date: date || '—' });
-  saveCards();
-  renderCol(col);
+  await supabase
+    .from('cards')
+    .insert({ user_name: user, card_date: date || '—', coluna: col });
+  await loadCards();
   closeForm(col);
 }
 
@@ -1134,12 +1135,14 @@ function closeModal() {
   document.getElementById('modal-delete').classList.remove('open');
   deleteTarget = null;
 }
-function confirmDelete() {
+async function confirmDelete() {
   if (!deleteTarget) return;
-  cards[deleteTarget.col] = cards[deleteTarget.col].filter(c => c.id !== deleteTarget.id);
-  saveCards();
-  renderCol(deleteTarget.col);
+  await supabase
+    .from('cards')
+    .delete()
+    .eq('id', deleteTarget.id);
   closeModal();
+  await loadCards();
 }
 document.getElementById('modal-delete').addEventListener('click', e => {
   if (e.target === e.currentTarget) closeModal();
@@ -1163,17 +1166,17 @@ function onDragOver(e) {
 function onDragLeave(e) {
   e.currentTarget.classList.remove('drag-over');
 }
-function onDrop(e, targetCol) {
+async function onDrop(e, targetCol) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
   if (!draggedCardId || draggedCol === targetCol) return;
-  const idx = cards[draggedCol].findIndex(c => c.id === draggedCardId);
-  if (idx === -1) return;
-  const [card] = cards[draggedCol].splice(idx, 1);
-  cards[targetCol].push(card);
-  saveCards();
-  renderAll();
+  const id = draggedCardId;
   draggedCardId = null;
+  await supabase
+    .from('cards')
+    .update({ coluna: targetCol })
+    .eq('id', id);
+  await loadCards();
 }
 
 /* ═══════════════ MANUAL ═══════════════ */
@@ -1310,16 +1313,17 @@ function renderChecklist(id) {
 
 /* ═══════════════ INIT ═══════════════ */
 buildTypeButtons();
-renderAll();
-</script>
+loadCards();
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-<script>
-const supabase = window.supabase.createClient(
-  "https://eyehyqncgplovnpsgbfu.supabase.co/rest/v1/",
-  "sb_publishable_wrjsK9A9WsH2tga6VfOVng_cYgfVvS0"
-);
+/* ═══════════════ REALTIME ═══════════════ */
+supabase
+  .channel('cards-channel')
+  .on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'cards' },
+    () => { loadCards(); }
+  )
+  .subscribe();
 </script>
 
 
