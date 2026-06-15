@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TI — Gestão de Acessos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2333;
+    --border: #2a2f45;
+    --border-light: #353b56;
+    --accent: #4f7cff;
+    --accent-dim: #4f7cff22;
+    --accent2: #38d9a9;
+    --accent2-dim: #38d9a915;
+    --warn: #ff6b6b;
+    --warn-dim: #ff6b6b18;
+    --text: #e8eaf0;
+    --text-muted: #7a82a0;
+    --text-dim: #4a5070;
+    --col-criando: #4f7cff;
+    --col-monitor: #f5a623;
+    --col-concluido: #38d9a9;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-card: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    flex-shrink: 0;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-brand .logo {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .header-brand h1 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.01em;
+  }
+  .header-brand span {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 4px;
+  }
+  .nav-tab {
+    padding: 6px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text-muted);
+    border: none;
+    background: transparent;
+    transition: all 0.2s;
+  }
+  .nav-tab.active {
+    background: var(--surface2);
+    color: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .nav-tab:hover:not(.active) { color: var(--text); }
+
+  /* ── VIEWS ── */
+  .view { display: none; flex: 1; overflow: hidden; }
+  .view.active { display: flex; flex-direction: column; }
+
+  /* ── KANBAN ── */
+  .kanban-toolbar {
+    padding: 16px 24px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .kanban-toolbar h2 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex: 1;
+  }
+  .kanban-board {
+    display: flex;
+    gap: 16px;
+    padding: 16px 24px 24px;
+    overflow-x: auto;
+    flex: 1;
+    align-items: flex-start;
+  }
+  .kanban-col {
+    flex: 1;
+    min-width: 280px;
+    max-width: 360px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 160px);
+  }
+  .col-header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .col-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .col-title {
+    font-size: 13px;
+    font-weight: 600;
+    flex: 1;
+    color: var(--text);
+  }
+  .col-count {
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--surface2);
+    color: var(--text-muted);
+    border-radius: 12px;
+    padding: 2px 8px;
+  }
+  .col-cards {
+    padding: 12px;
+    overflow-y: auto;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 60px;
+  }
+  .col-cards.drag-over {
+    background: var(--accent-dim);
+    border-radius: 6px;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    cursor: grab;
+    transition: all 0.18s;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--shadow-card);
+  }
+  .card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+  .card.dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+  }
+  .card-icon {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    background: var(--accent-dim);
+    color: var(--accent);
+  }
+  .card-body { flex: 1; min-width: 0; }
+  .card-user {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-date {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .card-delete {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .card-delete:hover { background: var(--warn-dim); color: var(--warn); }
+
+  /* ADD FORM */
+  .col-add-form {
+    padding: 10px 12px 12px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .add-form-fields {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .add-form-fields.open { display: flex; }
+  .add-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 13px;
+    padding: 7px 10px;
+    font-family: inherit;
+    outline: none;
+    transition: border 0.15s;
+    width: 100%;
+  }
+  .add-input:focus { border-color: var(--accent); }
+  .add-input::placeholder { color: var(--text-dim); }
+  .form-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .btn-confirm {
+    flex: 1;
+    padding: 7px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-confirm:hover { opacity: 0.85; }
+  .btn-cancel {
+    padding: 7px 12px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-cancel:hover { border-color: var(--border-light); color: var(--text); }
+  .btn-add-open {
+    width: 100%;
+    padding: 8px;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .btn-add-open:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  /* ── MODAL CONFIRM ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(3px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 28px;
+    width: 340px;
+    box-shadow: var(--shadow);
+    animation: popIn 0.2s ease;
+  }
+  @keyframes popIn {
+    from { transform: scale(0.92); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+  .modal-icon {
+    width: 44px; height: 44px;
+    background: var(--warn-dim);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .modal p { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-actions button {
+    flex: 1; padding: 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 600;
+    cursor: pointer; border: none;
+    transition: opacity 0.15s;
+  }
+  .btn-danger { background: var(--warn); color: #fff; }
+  .btn-danger:hover { opacity: 0.85; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border) !important; }
+  .btn-secondary:hover { border-color: var(--border-light) !important; }
+
+  /* ── MANUAL ── */
+  .manual-view {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+  .manual-view.active { display: flex; }
+  .manual-header {
+    padding: 20px 28px 0;
+    flex-shrink: 0;
+  }
+  .manual-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .manual-header p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .user-type-grid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .type-btn {
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+  .type-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .type-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(79,124,255,0.4);
+  }
+
+  .manual-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 28px 28px;
+  }
+  .manual-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--text-dim);
+    font-size: 14px;
+    gap: 12px;
+  }
+  .manual-empty .empty-icon { font-size: 40px; }
+
+  .checklist-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    animation: fadeUp 0.25s ease;
+  }
+  @keyframes fadeUp {
+    from { transform: translateY(10px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .checklist-top {
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .checklist-type-badge {
+    font-size: 18px;
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .checklist-info h3 { font-size: 17px; font-weight: 700; }
+  .checklist-info .via {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .checklist-info .via span {
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .needs-badges {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .need-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.03em;
+  }
+  .need-yes { background: var(--accent2-dim); color: var(--accent2); border: 1px solid var(--accent2); }
+  .need-no  { background: var(--warn-dim); color: var(--warn); border: 1px solid var(--warn); }
+
+  .checklist-steps {
+    padding: 16px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+  .step-item:hover { background: var(--surface2); }
+  .step-check {
+    width: 20px; height: 20px;
+    border-radius: 6px;
+    border: 2px solid var(--border-light);
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    font-size: 11px;
+    color: transparent;
+  }
+  .step-item.done .step-check {
+    background: var(--accent2);
+    border-color: var(--accent2);
+    color: #fff;
+  }
+  .step-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+    flex: 1;
+    transition: color 0.2s;
+  }
+  .step-item.done .step-text {
+    color: var(--text-dim);
+    text-decoration: line-through;
+  }
+  .step-tag {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    margin-top: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .tag-tasy     { background: rgba(79,124,255,0.15); color: #4f7cff; }
+  .tag-rede     { background: rgba(245,166,35,0.15); color: #f5a623; }
+  .tag-email    { background: rgba(56,217,169,0.15); color: #38d9a9; }
+  .tag-fisico   { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+  .tag-obs      { background: rgba(148,103,189,0.15); color: #9467bd; }
+
+  .step-obs {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    padding: 6px 10px;
+    background: var(--surface2);
+    border-radius: 6px;
+    border-left: 2px solid var(--border-light);
+    line-height: 1.5;
+  }
+  .step-obs-toggle {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .step-obs-toggle:hover { color: var(--accent); }
+
+  .checklist-progress {
+    padding: 14px 22px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .progress-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent2);
+    border-radius: 10px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .btn-reset-checks {
+    font-size: 11px;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .btn-reset-checks:hover { background: var(--surface2); color: var(--text-muted); }
+
+  .section-sep {
+    margin: 8px 0 4px;
+    padding: 4px 12px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+  }
+
+  /* Sub-type variant table */
+  .subtype-table {
+    margin: 8px 0 0;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .subtype-table th {
+    text-align: left;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .subtype-table td {
+    padding: 8px 8px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  .subtype-table tr:last-child td { border-bottom: none; }
+  .subtype-table tr:hover td { background: var(--surface2); }
+  .profile-pill {
+    font-size: 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-family: 'Courier New', monospace;
+    color: var(--accent);
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-brand">
+    <div class="logo">🏥</div>
+    <div>
+      <h1>Gestão de Acessos</h1>
+      <span>TI — Tasy / Rede / E-mail</span>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchView('kanban')">📋 Kanban</button>
+    <button class="nav-tab" onclick="switchView('manual')">📖 Manual</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════ KANBAN VIEW ═══════════════════════════════ -->
+<div class="view active" id="view-kanban">
+  <div class="kanban-toolbar">
+    <h2>Fila de Acessos</h2>
+  </div>
+  <div class="kanban-board">
+
+    <!-- COLUNA 1 -->
+    <div class="kanban-col" id="col-criando">
+      <div class="col-header">
+        <div class="col-dot" style="background:var(--col-criando)"></div>
+        <span class="col-title">Criando acesso de rede/e-mail</span>
+        <span class="col-count" id="count-criando">0</span>
+      </div>
+      <div class="col-cards" id="cards-criando"
+           ondragover="onDragOver(event)"
+           ondrop="onDrop(event,'criando')"
+           ondragleave="onDragLeave(event)">
+      </div>
+      <div class="col-add-form">
+        <div class="add-form-fields" id="form-criando">
+          <input class="add-input" id="user-criando" placeholder="usuário (ex: claudio.silva)" autocomplete="off">
+          <input class="add-input" id="date-criando" placeholder="data (ex: 12/06/26)" type="text" autocomplete="off">
+          <div class="form-actions">
+            <button class="btn-confirm" onclick="addCard('criando')">Adicionar</button>
+            <button class="btn-cancel" onclick="closeForm('criando')">Cancelar</button>
+          </div>
+        </div>
+        <button class="btn-add-open" id="btn-open-criando" onclick="openForm('criando')">
+          <span>＋</span> Adicionar usuário
+        </button>
+      </div>
+    </div>
+
+    <!-- COLUNA 2 -->
+    <div class="kanban-col" id="col-monitores">
+      <div class="col-header">
+        <div class="col-dot" style="background:var(--col-monitor)"></div>
+        <span class="col-title">Acessos Monitores</span>
+        <span class="col-count" id="count-monitores">0</span>
+      </div>
+      <div class="col-cards" id="cards-monitores"
+           ondragover="onDragOver(event)"
+           ondrop="onDrop(event,'monitores')"
+           ondragleave="onDragLeave(event)">
+      </div>
+      <div class="col-add-form">
+        <div class="add-form-fields" id="form-monitores">
+          <input class="add-input" id="user-monitores" placeholder="usuário (ex: joao.souza)" autocomplete="off">
+          <input class="add-input" id="date-monitores" placeholder="data (ex: 12/06/26)" type="text" autocomplete="off">
+          <div class="form-actions">
+            <button class="btn-confirm" onclick="addCard('monitores')">Adicionar</button>
+            <button class="btn-cancel" onclick="closeForm('monitores')">Cancelar</button>
+          </div>
+        </div>
+        <button class="btn-add-open" id="btn-open-monitores" onclick="openForm('monitores')">
+          <span>＋</span> Adicionar usuário
+        </button>
+      </div>
+    </div>
+
+    <!-- COLUNA 3 -->
+    <div class="kanban-col" id="col-concluido">
+      <div class="col-header">
+        <div class="col-dot" style="background:var(--col-concluido)"></div>
+        <span class="col-title">Concluído</span>
+        <span class="col-count" id="count-concluido">0</span>
+      </div>
+      <div class="col-cards" id="cards-concluido"
+           ondragover="onDragOver(event)"
+           ondrop="onDrop(event,'concluido')"
+           ondragleave="onDragLeave(event)">
+      </div>
+      <div class="col-add-form">
+        <div class="add-form-fields" id="form-concluido">
+          <input class="add-input" id="user-concluido" placeholder="usuário (ex: maria.lima)" autocomplete="off">
+          <input class="add-input" id="date-concluido" placeholder="data (ex: 12/06/26)" type="text" autocomplete="off">
+          <div class="form-actions">
+            <button class="btn-confirm" onclick="addCard('concluido')">Adicionar</button>
+            <button class="btn-cancel" onclick="closeForm('concluido')">Cancelar</button>
+          </div>
+        </div>
+        <button class="btn-add-open" id="btn-open-concluido" onclick="openForm('concluido')">
+          <span>＋</span> Adicionar usuário
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ MANUAL VIEW ═══════════════════════════════ -->
+<div class="view" id="view-manual">
+  <div class="manual-view active" id="manual-container">
+    <div class="manual-header">
+      <h2>Manual de Criação de Usuários</h2>
+      <p>Selecione o tipo de usuário para ver a checklist de procedimentos.</p>
+      <div class="user-type-grid" id="type-buttons"></div>
+    </div>
+    <div class="manual-body" id="manual-body">
+      <div class="manual-empty">
+        <div class="empty-icon">👆</div>
+        <div>Selecione um tipo de usuário acima</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAÇÃO -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal">
+    <div class="modal-icon">🗑️</div>
+    <h3>Remover usuário?</h3>
+    <p id="modal-msg">Isso irá remover o cartão permanentemente do quadro.</p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn-danger" onclick="confirmDelete()">Remover</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════ DADOS ═══════════════ */
+
+const USER_TYPES = [
+  {
+    id: 'medico',
+    label: '👨‍⚕️ Médico',
+    icon: '👨‍⚕️',
+    badge: { bg: '#4f7cff22', color: '#4f7cff' },
+    via: 'e-mail da Helen',
+    rede: true,
+    email: true,
+    steps: [
+      { text: 'Verificar se já existe cadastro no sistema antes de criar', tag: 'tasy' },
+      { text: 'Efetuar cadastro no Tasy', tag: 'tasy' },
+      { text: 'Incluir assinatura do termo no cadastro', tag: 'tasy' },
+      { text: 'Liberar perfil conforme especialidade (ver tabela abaixo)', tag: 'tasy',
+        obs: 'Nefrologista: grupo "Médico" (enfermarias) | Anestesista: HTML - Médico Anestesista | Cirurgião: HTML - Médico Cirurgião | Cardiologista: HTML - Médico Hemodinâmica | Radiologista: HTML - Médico CDI' },
+      { text: 'Definir evolução: Clínica (médicos) ou de acordo com especialidade', tag: 'tasy' },
+      { text: 'Solicitar criação de acesso à rede para infra', tag: 'rede' },
+      { text: 'Solicitar criação de e-mail institucional para infra', tag: 'email' },
+    ],
+    extras: {
+      title: 'Perfis por especialidade',
+      headers: ['Especialidade', 'Perfil Tasy'],
+      rows: [
+        ['Nefrologista', 'Grupo de perfis: Médico (enfermarias)'],
+        ['Anestesista', 'HTML - Médico Anestesista'],
+        ['Cirurgião', 'HTML - Médico Cirurgião'],
+        ['Cardiologista', 'HTML - Médico Hemodinâmica'],
+        ['Radiologista', 'HTML - Médico CDI'],
+        ['Demais especialidades', 'Grupo de perfis: Médico'],
+      ]
+    }
+  },
+  {
+    id: 'medico-estagiario',
+    label: '🩺 Méd. Estagiário',
+    icon: '🩺',
+    badge: { bg: '#9467bd22', color: '#9467bd' },
+    via: 'e-mail da Jaqueline/NEP',
+    rede: false,
+    email: false,
+    steps: [
+      { text: 'Verificar se já existe cadastro no sistema antes de criar', tag: 'tasy' },
+      { text: 'Efetuar cadastro no Tasy', tag: 'tasy' },
+      { text: 'Incluir assinatura do termo', tag: 'tasy' },
+      { text: 'Inserir data de expiração do acesso', tag: 'tasy' },
+      { text: 'Liberar perfil "médico estagiário"', tag: 'tasy' },
+      { text: 'Enviar dados de acesso para o e-mail pessoal do usuário', tag: 'email',
+        obs: 'Não precisa de acesso à rede nem e-mail institucional.' },
+    ],
+    extras: {
+      title: 'Setores por especialidade',
+      headers: ['Especialidade', 'Setor', 'Evolução'],
+      rows: [
+        ['Urologista', '*Centro Cirúrgico', 'Clínica'],
+        ['Anestesista', '*Centro Cirúrgico', 'Anestesista'],
+        ['Cirurgião', '*Centro Cirúrgico', 'Cirurgião'],
+        ['Infectologista', 'Comissão de Infecção Hospitalar', 'Clínica'],
+        ['Diálise Peritoneal', 'Andares', 'Clínica'],
+      ]
+    }
+  },
+  {
+    id: 'residente',
+    label: '🎓 Médico Residente',
+    icon: '🎓',
+    badge: { bg: '#f5a62322', color: '#f5a623' },
+    via: 'e-mail da Jakeline/Helen',
+    rede: true,
+    email: true,
+    steps: [
+      { text: 'Verificar se já existe cadastro no sistema antes de criar', tag: 'tasy' },
+      { text: 'Efetuar cadastro no Tasy (R3 ou R4)', tag: 'tasy' },
+      { text: 'Incluir assinatura do termo', tag: 'tasy' },
+      { text: 'Inserir data de expiração do acesso', tag: 'tasy' },
+      { text: 'Definir setor Tasy: Qualquer andar', tag: 'tasy' },
+      { text: 'Liberar grupo de perfil "Médico Residente (R3 e R4)"', tag: 'tasy' },
+      { text: 'Enviar dados de acesso para o e-mail pessoal do usuário', tag: 'email' },
+      { text: 'Solicitar criação de acesso à rede para infra', tag: 'rede' },
+      { text: 'Solicitar criação de e-mail institucional para infra', tag: 'email' },
+    ]
+  },
+  {
+    id: 'residente-hsp',
+    label: '🏥 Residente HSP',
+    icon: '🏥',
+    badge: { bg: '#38d9a922', color: '#38d9a9' },
+    via: 'e-mail da Jaqueline/NEP',
+    rede: true,
+    email: false,
+    steps: [
+      { text: 'Verificar se já existe cadastro no sistema antes de criar', tag: 'tasy' },
+      { text: 'Efetuar cadastro no Tasy (Residente vinculado à nefrologia HSP)', tag: 'tasy' },
+      { text: 'Incluir assinatura do termo', tag: 'tasy' },
+      { text: 'Inserir data de expiração do acesso', tag: 'tasy' },
+      { text: 'Definir setor Tasy: 7º andar', tag: 'tasy' },
+      { text: 'Liberar grupo de perfil "Médico Externo HSP - estágio"', tag: 'tasy' },
+      { text: 'Enviar dados de acesso para o e-mail pessoal do usuário', tag: 'email',
+        obs: 'Não precisa de e-mail institucional.' },
+      { text: 'Solicitar criação de acesso à rede para infra', tag: 'rede' },
+    ]
+  },
+  {
+    id: 'ic',
+    label: '🔬 Iniciação Científica',
+    icon: '🔬',
+    badge: { bg: '#ff6b6b22', color: '#ff6b6b' },
+    via: 'e-mail da Jaqueline',
+    rede: true,
+    email: true,
+    steps: [
+      { text: 'Verificar se já existe cadastro no sistema antes de criar', tag: 'tasy' },
+      { text: 'Efetuar cadastro no Tasy', tag: 'tasy' },
+      { text: 'Inserir data de expiração do acesso', tag: 'tasy' },
+      { text: 'Definir setor Tasy: Protocolos', tag: 'tasy' },
+      { text: 'Liberar perfil "HTML - Protocolo"', tag: 'tasy' },
+      { text: 'Enviar dados de acesso para o e-mail pessoal do usuário', tag: 'email' },
+      { text: 'Solicitar criação de acesso à rede para infra', tag: 'rede' },
+      { text: 'Solicitar criação de e-mail institucional para infra', tag: 'email' },
+    ]
+  },
+  {
+    id: 'monitor',
+    label: '📊 Monitor',
+    icon: '📊',
+    badge: { bg: '#4f7cff22', color: '#4f7cff' },
+    via: 'e-mail da equipe de protocolo',
+    rede: true,
+    email: true,
+    steps: [
+      { text: 'Verificar se já existe cadastro no sistema antes de criar', tag: 'tasy' },
+      { text: 'Efetuar cadastro no Tasy (se não localizar pessoa física, criar novo)', tag: 'tasy' },
+      { text: 'Definir setor Tasy: Protocolos', tag: 'tasy' },
+      { text: 'Liberar perfil "HTML - Monitoria - Protocolo"', tag: 'tasy' },
+      { text: 'Solicitar criação de acesso à rede para infra', tag: 'rede' },
+      { text: 'Solicitar criação de e-mail institucional para infra', tag: 'email' },
+      { text: 'Preencher informações na ficha recebida e imprimir', tag: 'fisico' },
+      { text: 'Anexar o termo de compromisso do Tasy à ficha', tag: 'fisico' },
+      { text: 'Responder e-mail ao solicitante informando que acesso está pronto e disponível para retirada na TI mediante entrega do termo de consentimento', tag: 'email' },
+    ]
+  },
+  {
+    id: 'auditor',
+    label: '🔍 Auditor Externo',
+    icon: '🔍',
+    badge: { bg: '#9467bd22', color: '#9467bd' },
+    via: 'e-mail da emissão de guias',
+    rede: false,
+    email: false,
+    steps: [
+      { text: 'Verificar se já existe cadastro no sistema antes de criar', tag: 'tasy' },
+      { text: 'Efetuar cadastro no Tasy (se não localizar pessoa física, criar novo)', tag: 'tasy' },
+      { text: 'Definir setor: Emissão de guias', tag: 'tasy' },
+      { text: 'Liberar perfil "HTML – Auditoria Externa"', tag: 'tasy' },
+      { text: 'Preencher ficha da solicitação com dados de acesso e imprimir', tag: 'fisico' },
+      { text: 'Anexar o termo de compromisso do Tasy', tag: 'fisico' },
+      { text: 'Responder e-mail ao solicitante informando que acesso está pronto e disponível para retirada na TI mediante entrega do termo de consentimento', tag: 'email',
+        obs: 'NÃO precisa de acesso à rede nem e-mail institucional.' },
+    ]
+  },
+  {
+    id: 'funcionario',
+    label: '👷 Funcionário',
+    icon: '👷',
+    badge: { bg: '#f5a62322', color: '#f5a623' },
+    via: 'e-mail da equipe do RH',
+    rede: true,
+    email: true,
+    steps: [
+      { text: 'Verificar se já existe cadastro no sistema antes de criar', tag: 'tasy' },
+      { text: 'Efetuar cadastro no Tasy', tag: 'tasy' },
+      { text: 'Liberar perfil conforme descrito na solicitação anexada', tag: 'tasy' },
+      { text: 'Encaminhar login do Tasy para equipe de infra criar acesso de rede e e-mail igual', tag: 'rede' },
+      { text: 'Solicitar criação de e-mail institucional para infra', tag: 'email' },
+      { text: 'Preencher informações na ficha recebida e imprimir', tag: 'fisico' },
+      { text: 'Anexar o termo de compromisso do Tasy', tag: 'fisico' },
+      { text: 'NÃO enviar dados de acesso por e-mail', tag: 'obs',
+        obs: 'Os dados de acesso devem ser entregues pessoalmente ao funcionário.' },
+      { text: 'Se multiprofissional (enfermeiro, técnico, assistente social, fisioterapeuta): ao receber o termo preenchido, inserir número do conselho e assinatura no cadastro', tag: 'obs' },
+    ]
+  },
+  {
+    id: 'multiprofissional',
+    label: '🩹 Multiprofissional',
+    icon: '🩹',
+    badge: { bg: '#38d9a922', color: '#38d9a9' },
+    via: 'e-mail da Helen',
+    rede: true,
+    email: true,
+    steps: [
+      { text: 'Verificar se já existe cadastro no sistema antes de criar', tag: 'tasy' },
+      { text: 'Efetuar cadastro no Tasy', tag: 'tasy' },
+      { text: 'Incluir assinatura do termo', tag: 'tasy' },
+      { text: 'Inserir data de expiração do acesso', tag: 'tasy' },
+      { text: 'Liberar perfil de acordo com a especialidade', tag: 'tasy',
+        obs: 'Nutrição: "HTML - Nutrição" | Fisioterapia: "HTML - Fisioterapia"' },
+      { text: 'Enviar dados de acesso para o e-mail pessoal do usuário', tag: 'email' },
+      { text: 'Solicitar criação de acesso à rede para infra', tag: 'rede' },
+      { text: 'Solicitar criação de e-mail institucional para infra', tag: 'email' },
+      { text: 'Ao receber o termo preenchido: inserir número do conselho e assinatura no cadastro', tag: 'fisico' },
+    ],
+    extras: {
+      title: 'Perfis por especialidade',
+      headers: ['Especialidade', 'Perfil Tasy'],
+      rows: [
+        ['Nutrição', 'HTML - Nutrição'],
+        ['Fisioterapia', 'HTML - Fisioterapia'],
+      ]
+    }
+  },
+];
+
+const TAG_LABELS = { tasy: 'Tasy', rede: 'Rede', email: 'E-mail', fisico: 'Físico', obs: 'Obs' };
+
+/* ═══════════════ STATE ═══════════════ */
+let cards = { criando: [], monitores: [], concluido: [] };
+let draggedCardId = null;
+let deleteTarget = null;
+let checkState = {}; // { typeId: Set of done stepIndexes }
+let currentType = null;
+
+// Load from localStorage
+try {
+  const saved = localStorage.getItem('ti_kanban_v2');
+  if (saved) cards = JSON.parse(saved);
+  const savedChecks = localStorage.getItem('ti_checks_v2');
+  if (savedChecks) {
+    const raw = JSON.parse(savedChecks);
+    for (const k in raw) checkState[k] = new Set(raw[k]);
+  }
+} catch(e) {}
+
+function saveCards() {
+  try { localStorage.setItem('ti_kanban_v2', JSON.stringify(cards)); } catch(e) {}
+}
+function saveChecks() {
+  try {
+    const raw = {};
+    for (const k in checkState) raw[k] = [...checkState[k]];
+    localStorage.setItem('ti_checks_v2', JSON.stringify(raw));
+  } catch(e) {}
+}
+
+/* ═══════════════ NAVIGATION ═══════════════ */
+function switchView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* ═══════════════ KANBAN ═══════════════ */
+function genId() { return 'c' + Date.now() + Math.random().toString(36).slice(2,6); }
+
+const COL_ICONS = { criando: '🔧', monitores: '👁️', concluido: '✅' };
+
+function renderAll() {
+  ['criando','monitores','concluido'].forEach(col => renderCol(col));
+}
+
+function renderCol(col) {
+  const container = document.getElementById('cards-' + col);
+  const count = document.getElementById('count-' + col);
+  const list = cards[col] || [];
+  count.textContent = list.length;
+  container.innerHTML = '';
+  list.forEach(card => {
+    const el = document.createElement('div');
+    el.className = 'card';
+    el.draggable = true;
+    el.dataset.id = card.id;
+    el.dataset.col = col;
+    el.innerHTML = `
+      <div class="card-icon">${COL_ICONS[col]}</div>
+      <div class="card-body">
+        <div class="card-user">${card.user}</div>
+        <div class="card-date">📅 ${card.date}</div>
+      </div>
+      <button class="card-delete" title="Remover" onclick="askDelete('${card.id}','${col}','${card.user}')">🗑</button>
+    `;
+    el.addEventListener('dragstart', onDragStart);
+    el.addEventListener('dragend', onDragEnd);
+    container.appendChild(el);
+  });
+}
+
+function openForm(col) {
+  document.getElementById('form-' + col).classList.add('open');
+  document.getElementById('btn-open-' + col).style.display = 'none';
+  document.getElementById('user-' + col).focus();
+}
+function closeForm(col) {
+  document.getElementById('form-' + col).classList.remove('open');
+  document.getElementById('btn-open-' + col).style.display = '';
+  document.getElementById('user-' + col).value = '';
+  document.getElementById('date-' + col).value = '';
+}
+
+function addCard(col) {
+  const user = document.getElementById('user-' + col).value.trim();
+  const date = document.getElementById('date-' + col).value.trim();
+  if (!user) { document.getElementById('user-' + col).focus(); return; }
+  cards[col].push({ id: genId(), user, date: date || '—' });
+  saveCards();
+  renderCol(col);
+  closeForm(col);
+}
+
+// Enter key on inputs
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const cols = ['criando','monitores','concluido'];
+    for (const col of cols) {
+      const form = document.getElementById('form-' + col);
+      if (form && form.classList.contains('open')) { addCard(col); break; }
+    }
+  }
+});
+
+/* DELETE */
+function askDelete(id, col, user) {
+  deleteTarget = { id, col };
+  document.getElementById('modal-msg').textContent = `Remover "${user}" do quadro? Esta ação não pode ser desfeita.`;
+  document.getElementById('modal-delete').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-delete').classList.remove('open');
+  deleteTarget = null;
+}
+function confirmDelete() {
+  if (!deleteTarget) return;
+  cards[deleteTarget.col] = cards[deleteTarget.col].filter(c => c.id !== deleteTarget.id);
+  saveCards();
+  renderCol(deleteTarget.col);
+  closeModal();
+}
+document.getElementById('modal-delete').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+/* DRAG & DROP */
+function onDragStart(e) {
+  draggedCardId = e.currentTarget.dataset.id;
+  draggedCol = e.currentTarget.dataset.col;
+  setTimeout(() => e.currentTarget.classList.add('dragging'), 0);
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onDrop(e, targetCol) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!draggedCardId || draggedCol === targetCol) return;
+  const idx = cards[draggedCol].findIndex(c => c.id === draggedCardId);
+  if (idx === -1) return;
+  const [card] = cards[draggedCol].splice(idx, 1);
+  cards[targetCol].push(card);
+  saveCards();
+  renderAll();
+  draggedCardId = null;
+}
+
+/* ═══════════════ MANUAL ═══════════════ */
+function buildTypeButtons() {
+  const container = document.getElementById('type-buttons');
+  USER_TYPES.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'type-btn';
+    btn.textContent = t.label;
+    btn.dataset.id = t.id;
+    btn.onclick = () => selectType(t.id);
+    container.appendChild(btn);
+  });
+}
+
+function selectType(id) {
+  currentType = id;
+  document.querySelectorAll('.type-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.id === id);
+  });
+  renderChecklist(id);
+}
+
+function toggleStep(typeId, idx) {
+  if (!checkState[typeId]) checkState[typeId] = new Set();
+  if (checkState[typeId].has(idx)) checkState[typeId].delete(idx);
+  else checkState[typeId].add(idx);
+  saveChecks();
+  updateStepUI(typeId, idx);
+  updateProgress(typeId);
+}
+
+function updateStepUI(typeId, idx) {
+  const item = document.querySelector(`.step-item[data-idx="${idx}"]`);
+  if (!item) return;
+  const done = checkState[typeId] && checkState[typeId].has(idx);
+  item.classList.toggle('done', done);
+  item.querySelector('.step-check').textContent = done ? '✓' : '';
+}
+
+function updateProgress(typeId) {
+  const type = USER_TYPES.find(t => t.id === typeId);
+  if (!type) return;
+  const total = type.steps.length;
+  const done = checkState[typeId] ? checkState[typeId].size : 0;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const fill = document.getElementById('progress-fill');
+  const text = document.getElementById('progress-text');
+  if (fill) fill.style.width = pct + '%';
+  if (text) text.textContent = `${done} / ${total} concluídos`;
+}
+
+function resetChecks(typeId) {
+  checkState[typeId] = new Set();
+  saveChecks();
+  renderChecklist(typeId);
+}
+
+function renderChecklist(id) {
+  const type = USER_TYPES.find(t => t.id === id);
+  const body = document.getElementById('manual-body');
+  if (!type) return;
+
+  const done = checkState[id] ? checkState[id].size : 0;
+  const total = type.steps.length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
+  const needBadges = `
+    <span class="need-badge ${type.rede ? 'need-yes' : 'need-no'}">
+      ${type.rede ? '✓' : '✗'} Rede
+    </span>
+    <span class="need-badge ${type.email ? 'need-yes' : 'need-no'}">
+      ${type.email ? '✓' : '✗'} E-mail Inst.
+    </span>
+  `;
+
+  let stepsHTML = '';
+  type.steps.forEach((step, idx) => {
+    const isDone = checkState[id] && checkState[id].has(idx);
+    const tagLabel = TAG_LABELS[step.tag] || step.tag;
+    const obsHTML = step.obs
+      ? `<div class="step-obs">${step.obs}</div>`
+      : '';
+    stepsHTML += `
+      <div class="step-item${isDone ? ' done' : ''}" data-idx="${idx}" onclick="toggleStep('${id}',${idx})">
+        <div class="step-check">${isDone ? '✓' : ''}</div>
+        <div style="flex:1">
+          <div class="step-text">${step.text}</div>
+          ${obsHTML}
+        </div>
+        <span class="step-tag tag-${step.tag}">${tagLabel}</span>
+      </div>
+    `;
+  });
+
+  let extrasHTML = '';
+  if (type.extras) {
+    const { title, headers, rows } = type.extras;
+    const ths = headers.map(h => `<th>${h}</th>`).join('');
+    const trs = rows.map(r =>
+      `<tr>${r.map((cell, i) => `<td>${i > 0 && i === headers.length - 1 ? `<span class="profile-pill">${cell}</span>` : cell}</td>`).join('')}</tr>`
+    ).join('');
+    extrasHTML = `
+      <div class="section-sep">📋 ${title}</div>
+      <div style="padding: 0 12px 12px">
+        <table class="subtype-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
+      </div>
+    `;
+  }
+
+  body.innerHTML = `
+    <div class="checklist-card">
+      <div class="checklist-top">
+        <div class="checklist-type-badge" style="background:${type.badge.bg};color:${type.badge.color}">${type.icon}</div>
+        <div class="checklist-info">
+          <h3>${type.label.replace(/^.+?\s/, '')}</h3>
+          <div class="via">Solicitação via <span>${type.via}</span></div>
+        </div>
+        <div class="needs-badges">${needBadges}</div>
+      </div>
+      <div class="section-sep">✅ Checklist de procedimentos</div>
+      <div class="checklist-steps">${stepsHTML}</div>
+      ${extrasHTML}
+      <div class="checklist-progress">
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progress-fill" style="width:${pct}%"></div>
+        </div>
+        <span class="progress-text" id="progress-text">${done} / ${total} concluídos</span>
+        <button class="btn-reset-checks" onclick="resetChecks('${id}')">↺ Resetar</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ═══════════════ INIT ═══════════════ */
+buildTypeButtons();
+renderAll();
+</script>
+</body>
+</html>
