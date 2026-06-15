@@ -1019,16 +1019,34 @@ try {
   }
 } catch(e) {}
 
-function saveCards() {
-  try { localStorage.setItem('ti_kanban_v2', JSON.stringify(cards)); } catch(e) {}
+async function saveCard(card) {
+  await supabase
+    .from('cards')
+    .insert(card);
 }
-function saveChecks() {
-  try {
-    const raw = {};
-    for (const k in checkState) raw[k] = [...checkState[k]];
-    localStorage.setItem('ti_checks_v2', JSON.stringify(raw));
-  } catch(e) {}
+
+async function loadCards() {
+  const { data } = await supabase
+    .from('cards')
+    .select('*');
+
+  cards = {
+    criando: [],
+    monitores: [],
+    concluido: []
+  };
+
+  data.forEach(card => {
+    cards[card.coluna].push({
+      id: card.id,
+      user: card.user_name,
+      date: card.card_date
+    });
+  });
+
+  renderAll();
 }
+
 
 /* ═══════════════ NAVIGATION ═══════════════ */
 function switchView(v) {
@@ -1294,5 +1312,16 @@ function renderChecklist(id) {
 buildTypeButtons();
 renderAll();
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+<script>
+const supabase = window.supabase.createClient(
+  "https://eyehyqncgplovnpsgbfu.supabase.co/rest/v1/",
+  "sb_publishable_wrjsK9A9WsH2tga6VfOVng_cYgfVvS0"
+);
+</script>
+
+
 </body>
 </html>
